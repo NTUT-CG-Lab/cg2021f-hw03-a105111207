@@ -39,12 +39,12 @@
 			//有幾個項目就呼叫幾個 addChild
 			//addChild 要比 renderModal 先呼叫
 			so.addChild("繪製出 5 個畫面", 1, true);
-			so.addChild("回答問題", 1, false);
+			so.addChild("回答問題", 1, true);
 			so.addChild("可按鍵選擇上 / 下一隻角色", 1, true);
 			so.addChild("讀取作業 2 儲存的座標點在眼睛上繪製出分割線", 1, true);
-			so.addChild("可選擇當下控制哪個虹膜", 1, false);
-			so.addChild("按滑鼠左鍵控制虹膜移動，右鍵停止", 2, false);
-			so.addChild("複製參數至對應目標參數", 2, false);
+			so.addChild("可選擇當下控制哪個虹膜", 1, true);
+			so.addChild("按滑鼠左鍵控制虹膜移動，右鍵停止", 2, true);
+			so.addChild("複製參數至對應目標參數", 2, true);
 			so.addChild("可儲存虹膜轉動角度", 1, false);
 
 			//產生自評表，參數如下所示
@@ -94,13 +94,19 @@
 		let camera, camera2, camera3, camera4, camera5;
 
 		let modelList = ['models/mmd/kizunaai/kizunaai.pmx', 'models/mmd/るいのれ式物述有栖_配布用フォルダ/物述有栖.pmx', 'models/mmd/『天宮こころ(Kokoro Amamiya)』/『天宮こころ(Kokoro Amamiya)』.pmx'];
-		var body = document.body;
-		var clickcount = 0, linePosition = new Array(8), changeModel = 0;
-		var diffrentModelPos = new Array(12);
-		const vpds = [];
-		var data, selectEyes = 0;
 		let lineObj = [];
+		var body = document.body;
+		var linePosition = new Array(8), changeModel = 0;
+		var diffrentModelPos = new Array(12);
+		var data, selectEyes = 0, iris_rotation = new Array(8), isMoved = false;
+		var bone_index = 0;
+		var mouseWorld = new THREE.Vector3(), clickPoint = 0;
+		var selectId = [0, 1, 2, 3, 4, 6, 7, 5];
+		const vpds = [];
 		
+		for (let i = 0; i < 8; i++) {
+			iris_rotation[i] = 0;
+		}
 
 		Ammo().then(function (AmmoLib) {
 
@@ -112,39 +118,79 @@
 		});
 
 		function setCameraLayer() {
-			camera.position.x *= -1;
-			if (selectEyes % 2 == 0) {
-				for (let i = 0; i < 14; i++) {
-						lineObj[i].position.x = -1;
+			if (selectEyes < 0) {
+				selectEyes = 7;
+			}
+			if (selectEyes > 7) {
+				selectEyes = 0;
+			}
+
+			if (selectEyes < 6){
+				if (selectEyes % 2 == 0) {
+					if (camera.position.x > 0) {
+						camera.position.x *= -1;
 					}
-				}
-				if (selectEyes % 2 == 1) {
+					for (let i = 0; i < 14; i++) {
+							lineObj[i].position.x = -1;
+					}
+				} else {
+					if (camera.position.x < 0) {
+						camera.position.x *= -1;
+					}
 					for (let i = 0; i < 14; i++) {
 						lineObj[i].position.x = 0;
 					}
 				}
-					
-				if (selectEyes % 8 == 0 || selectEyes % 8 <= 1) {
-					camera2.layers.enable( 1 );
-					camera3.layers.set( 0 );
-					camera5.layers.set( 0 );
+			} else {
+				if (selectEyes == 7) {
+					if (camera.position.x > 0) {
+						camera.position.x *= -1;
+					}
+					for (let i = 0; i < 14; i++) {
+							lineObj[i].position.x = -1;
+					}
+				} else {
+					if (camera.position.x < 0) {
+						camera.position.x *= -1;
+					}
+
+					for (let i = 0; i < 14; i++) {
+						lineObj[i].position.x = 0;
+					}
 				}
-				if (selectEyes % 8 > 1 && selectEyes % 8 <= 3) {
-					camera3.layers.enable( 1 );
-					camera2.layers.set( 0 );
-					camera4.layers.set( 0 );
-				} 
-				if (selectEyes % 8 > 3 && selectEyes % 8 <= 5) {
-					camera4.layers.enable( 1 );
-					camera3.layers.set( 0 );
-					camera5.layers.set( 0 );
-				} 
-				if (selectEyes % 8 > 5 && selectEyes % 8 <= 7) {
-					camera5.layers.enable( 1 );
-					camera4.layers.set( 0 );
-					camera2.layers.set( 0 );
-				}
-				animate();
+			}
+
+			if (selectEyes == 0 || selectEyes == 1) {
+				camera2.layers.enable( 1 );
+				camera3.layers.set( 0 );
+				camera5.layers.set( 0 );
+			}
+			if (selectEyes == 2 || selectEyes == 3) {
+				camera3.layers.enable( 1 );
+				camera2.layers.set( 0 );
+				camera4.layers.set( 0 );
+			} 
+			if (selectEyes == 4) {
+				camera4.layers.enable( 1 );
+				camera3.layers.set( 0 );
+				camera5.layers.set( 0 );
+			} 
+			if (selectEyes == 5) {
+				camera5.layers.enable( 1 );
+				camera4.layers.set( 0 );
+				camera2.layers.set( 0 );
+			} 
+			if (selectEyes == 6) {
+				camera4.layers.enable( 1 );
+				camera3.layers.set( 0 );
+				camera5.layers.set( 0 );
+			}
+			if (selectEyes == 7) {
+				camera5.layers.enable( 1 );
+				camera4.layers.set( 0 );
+				camera2.layers.set( 0 );
+			}
+			render();
 		}
 		
 		function onDocumentKeyDown(e){
@@ -152,41 +198,29 @@
 			var keyCode = e.keyCode;
 			switch ( keyCode )	{
 				case 81:
-					for (let i = 0; i < 4; i ++) {
-						const points = [];
-						if (i == 0) {
-							points.push( new THREE.Vector3( -linePosition[0] - 0.5, linePosition[1], 20 ) );
-							points.push( new THREE.Vector3( -linePosition[0] + 0.5, linePosition[1], 20 ) );
-						} else if (i == 1) {
-							points.push( new THREE.Vector3( -linePosition[2], linePosition[3] - 0.5, 20 ) );
-							points.push( new THREE.Vector3( -linePosition[2], linePosition[3] + 0.5, 20 ) );
-						} else if (i == 2) {
-							points.push( new THREE.Vector3( -linePosition[4] - 0.5, linePosition[5], 20 ) );
-							points.push( new THREE.Vector3( -linePosition[4] + 0.5, linePosition[5], 20 ) );
-						} else {
-							points.push( new THREE.Vector3( -linePosition[6], linePosition[7] - 0.5, 20 ) );
-							points.push( new THREE.Vector3( -linePosition[6], linePosition[7] + 0.5, 20 ) );
-						}
-						const geometry = new THREE.BufferGeometry().setFromPoints( points );
-						const line = new THREE.Line( geometry, new THREE.LineBasicMaterial( { color: lineColorRigh[i % 2] } ) );
-
-						if ( i == 0 ) {
-							line.name = 'rtop';
-							scene.remove( scene.getObjectByName('rtop') );
-						} else if ( i == 1 ) {
-							line.name = 'rright';
-							scene.remove( scene.getObjectByName('rright') );
-						} else if ( i == 2 ) {
-							line.name = 'rbottom';
-							scene.remove( scene.getObjectByName('rbottom') );
-						} else {
-							line.name = 'rleft';
-							scene.remove( scene.getObjectByName('rleft') );
-						}
-						scene.add( line );
-					}
-					break;
+					if (selectEyes == 0)
+						iris_rotation[selectEyes + 1] = iris_rotation[0];
+					if (selectEyes == 1)
+						iris_rotation[selectEyes + 1] = -iris_rotation[1];
+					if (selectEyes == 2)
+						iris_rotation[selectEyes + 1] = iris_rotation[2];
+					if (selectEyes == 3)
+						iris_rotation[selectEyes + 1] = -iris_rotation[3];
+					if (selectEyes == 4)
+						iris_rotation[selectEyes + 1] = -iris_rotation[4];
+					if (selectEyes == 5)
+						iris_rotation[selectEyes + 1] = -iris_rotation[5];
+					if (selectEyes == 6)
+						iris_rotation[selectEyes + 1] = -iris_rotation[6];
+					if (selectEyes == 7)
+						iris_rotation[0] = -iris_rotation[7];
+					console.log(selectEyes);
+					selectEyes += 1;
+					setCameraLayer();
+				break;
 				case 65:
+					selectEyes = 0;
+					isMoved = false;
 					changeModel -= 1;
 					if ( changeModel < 0) {
 						changeModel = 2;
@@ -196,11 +230,12 @@
 					while(elements.length > 0){
 						elements[0].parentNode.removeChild(elements[0]);
 					}
-					clickcount = 0;
 					init();
 					animate();
-					break;
+				break;
 				case 68:
+					selectEyes = 0;
+					isMoved = false;
 					changeModel += 1;
 					if (changeModel > 2) {
 						changeModel = 0;
@@ -210,7 +245,6 @@
 					while(elements2.length > 0){
 						elements2[0].parentNode.removeChild(elements2[0]);
 					}
-					clickcount = 0;
 					init();
 					animate();
 				break;
@@ -284,6 +318,59 @@
 		}
 
 		document.addEventListener('keydown',onDocumentKeyDown, false);
+		document.oncontextmenu = function() { return false;};
+
+		function mouseClick(e) {
+			if (e.which == 1) {
+				isMoved = true;
+
+				if (selectEyes % 2 == 0) {
+					for (var i = 1; i < mesh.skeleton.bones.length; i++) {
+						if (mesh.skeleton.bones[i].name == "右目") {
+							bone_index = i;
+							break;
+						}
+					}
+				} else {
+					for (var i = 1; i < mesh.skeleton.bones.length; i++) {
+						if (mesh.skeleton.bones[i].name == "左目") {
+							bone_index = i;
+							break;
+						}
+					}
+				}
+				
+				if (selectEyes < 4) {
+					clickPoint = mouseWorld.y;
+				} else {
+					clickPoint = mouseWorld.x;
+				}
+			}
+			if (e.which == 3) {
+				isMoved = false;
+			}
+		}
+		document.body.addEventListener('mousedown', mouseClick, false);
+
+		function getPosition(e) {
+			const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+			mouseWorld.set(
+				((e.clientX - left + 1) / width) * 2 - 1,
+				-((e.clientY - top + 1) / height) * 2 + 1,
+				(camera.near + camera.far) / (camera.near - camera.far),
+			);
+			mouseWorld.unproject(camera);
+
+			if (isMoved == true) {
+				if (selectEyes < 4) {
+					iris_rotation[selectEyes] = (mouseWorld.y - clickPoint) * -Math.PI / 2;
+				} else {
+					iris_rotation[selectEyes] = (mouseWorld.x - clickPoint) * Math.PI / 2;
+				}
+			}
+		}
+
+		document.body.addEventListener('mousemove', getPosition, false);
 
 		function readTextFile(file, callback) {
 			var rawFile = new XMLHttpRequest();
@@ -478,15 +565,14 @@
 		function animate() {
 
 			requestAnimationFrame(animate);
-			//
-			/*if( mesh != null ) {
-				
-				mesh.position.x = 0;
-				mesh.position.y = - 90;
-				mesh.position.z = 0;
-				mesh.scale.set(5.0, 5.0, 5.0);
-			}*/
 			render();
+		}
+
+		function cleanRotation() {
+			mesh.skeleton.bones[88].rotation.x = 0;
+			mesh.skeleton.bones[86].rotation.x = 0;
+			mesh.skeleton.bones[88].rotation.y = 0;
+			mesh.skeleton.bones[86].rotation.y = 0;
 		}
 
 		function render() {
@@ -494,27 +580,48 @@
 			effect.clear();
 
 
+			effect.setViewport(0, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT);
+			cleanRotation();
+			if( selectEyes < 4 ) {
+				mesh.skeleton.bones[bone_index].rotation.x = iris_rotation[selectEyes];
+			} else {
+				mesh.skeleton.bones[bone_index].rotation.y = iris_rotation[selectEyes];
+			}
+			for(let i = 0; i < 10; i++){
+				effect.render(scene, camera);
+			}
+
 			effect.setViewport(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_WIDTH / 4, SCREEN_HEIGHT / 2);
-			effect.render(scene, camera2);
+			cleanRotation();
+			mesh.skeleton.bones[88].rotation.x = iris_rotation[0];
+			mesh.skeleton.bones[86].rotation.x = iris_rotation[1];
+			for(let i = 0; i < 5; i++){
+				effect.render(scene, camera2);
+			}
 
 			effect.setViewport(SCREEN_WIDTH / 2 + SCREEN_WIDTH / 4, SCREEN_HEIGHT / 2, SCREEN_WIDTH / 4, SCREEN_HEIGHT / 2);
-			effect.render(scene, camera3);
+			cleanRotation();
+			mesh.skeleton.bones[88].rotation.x = iris_rotation[2];
+			mesh.skeleton.bones[86].rotation.x = iris_rotation[3];
+			for(let i = 0; i < 5; i++){
+				effect.render(scene, camera3);
+			}
 
 			effect.setViewport(SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 4, SCREEN_HEIGHT / 2);
-			effect.render(scene, camera4);
+			cleanRotation();
+			mesh.skeleton.bones[88].rotation.y = iris_rotation[4];
+			mesh.skeleton.bones[86].rotation.y = iris_rotation[6];
+			for(let i = 0; i < 5; i++){
+				effect.render(scene, camera4);
+			}
 
 			effect.setViewport(SCREEN_WIDTH / 2 + SCREEN_WIDTH / 4, 0, SCREEN_WIDTH / 4, SCREEN_HEIGHT / 2);
-			effect.render(scene, camera5);
-
-			effect.setViewport(0, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT);
-			/*if( mesh != null ) {
-				mesh.position.x = 18;
-				mesh.position.y = - 640;
-				mesh.position.z = - 20;
-				mesh.scale.set(35.0, 35.0, 35.0);
-			}*/
-			effect.render(scene, camera);
-			
+			cleanRotation();
+			mesh.skeleton.bones[88].rotation.y = iris_rotation[7];
+			mesh.skeleton.bones[86].rotation.y = iris_rotation[5];
+			for(let i = 0; i < 5; i++){
+				effect.render(scene, camera5);
+			}
 		}
 	</script>
 
