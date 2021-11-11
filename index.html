@@ -196,6 +196,9 @@
 				case 65:
 					selectEyes = 0;
 					isMoved = false;
+					for (let i = 0; i < 8; i++) {
+						iris_rotation[i] = 0;
+					}
 					changeModel -= 1;
 					if ( changeModel < 0) {
 						changeModel = 2;
@@ -211,6 +214,9 @@
 				case 68:
 					selectEyes = 0;
 					isMoved = false;
+					for (let i = 0; i < 8; i++) {
+						iris_rotation[i] = 0;
+					}
 					changeModel += 1;
 					if (changeModel > 2) {
 						changeModel = 0;
