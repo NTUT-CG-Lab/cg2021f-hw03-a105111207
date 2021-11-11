@@ -45,7 +45,7 @@
 			so.addChild("可選擇當下控制哪個虹膜", 1, true);
 			so.addChild("按滑鼠左鍵控制虹膜移動，右鍵停止", 2, true);
 			so.addChild("複製參數至對應目標參數", 2, true);
-			so.addChild("可儲存虹膜轉動角度", 1, false);
+			so.addChild("可儲存虹膜轉動角度", 1, true);
 
 			//產生自評表，參數如下所示
 			so.renderModal(
@@ -97,11 +97,10 @@
 		let lineObj = [];
 		var body = document.body;
 		var linePosition = new Array(8), changeModel = 0;
-		var diffrentModelPos = new Array(12);
 		var data, selectEyes = 0, iris_rotation = new Array(8), isMoved = false;
-		var bone_index = 0;
+		var bone_index = [0, 0];
 		var mouseWorld = new THREE.Vector3(), clickPoint = 0;
-		var selectId = [0, 1, 2, 3, 4, 6, 7, 5];
+		var selectId = [0, 1, 2, 3, 4, 7, 6, 5];
 		const vpds = [];
 		
 		for (let i = 0; i < 8; i++) {
@@ -117,6 +116,21 @@
 
 		});
 
+		function searchRLEyes() {
+			for (var i = 1; i < mesh.skeleton.bones.length; i++) {
+				if (mesh.skeleton.bones[i].name == "右目") {
+					bone_index[0] = i;
+					break;
+				}
+			}
+			for (var i = 1; i < mesh.skeleton.bones.length; i++) {
+				if (mesh.skeleton.bones[i].name == "左目") {
+					bone_index[1] = i;
+					break;
+				}
+			}
+		}
+
 		function setCameraLayer() {
 			if (selectEyes < 0) {
 				selectEyes = 7;
@@ -125,45 +139,26 @@
 				selectEyes = 0;
 			}
 
-			if (selectEyes < 6){
-				if (selectEyes % 2 == 0) {
-					if (camera.position.x > 0) {
-						camera.position.x *= -1;
-					}
-					for (let i = 0; i < 14; i++) {
-							lineObj[i].position.x = -1;
-					}
-				} else {
-					if (camera.position.x < 0) {
-						camera.position.x *= -1;
-					}
-					for (let i = 0; i < 14; i++) {
-						lineObj[i].position.x = 0;
-					}
+			if (selectEyes % 2 == 0) {
+				if (camera.position.x > 0) {
+					camera.position.x *= -1;
+				}
+				for (let i = 0; i < 14; i++) {
+					lineObj[i].position.x = -1;
 				}
 			} else {
-				if (selectEyes == 7) {
-					if (camera.position.x > 0) {
-						camera.position.x *= -1;
-					}
-					for (let i = 0; i < 14; i++) {
-							lineObj[i].position.x = -1;
-					}
-				} else {
-					if (camera.position.x < 0) {
-						camera.position.x *= -1;
-					}
-
-					for (let i = 0; i < 14; i++) {
-						lineObj[i].position.x = 0;
-					}
+				if (camera.position.x < 0) {
+					camera.position.x *= -1;
+				}
+				for (let i = 0; i < 14; i++) {
+					lineObj[i].position.x = 0;
 				}
 			}
 
 			if (selectEyes == 0 || selectEyes == 1) {
 				camera2.layers.enable( 1 );
 				camera3.layers.set( 0 );
-				camera5.layers.set( 0 );
+				camera4.layers.set( 0 );
 			}
 			if (selectEyes == 2 || selectEyes == 3) {
 				camera3.layers.enable( 1 );
@@ -181,14 +176,15 @@
 				camera2.layers.set( 0 );
 			} 
 			if (selectEyes == 6) {
-				camera4.layers.enable( 1 );
-				camera3.layers.set( 0 );
-				camera5.layers.set( 0 );
-			}
-			if (selectEyes == 7) {
 				camera5.layers.enable( 1 );
 				camera4.layers.set( 0 );
 				camera2.layers.set( 0 );
+			}
+			if (selectEyes == 7) {
+				camera4.layers.enable( 1 );
+				camera2.layers.set( 0 );
+				camera3.layers.set( 0 );
+				camera5.layers.set( 0 );
 			}
 			render();
 		}
@@ -197,27 +193,6 @@
 			//e = e || window.event;
 			var keyCode = e.keyCode;
 			switch ( keyCode )	{
-				case 81:
-					if (selectEyes == 0)
-						iris_rotation[selectEyes + 1] = iris_rotation[0];
-					if (selectEyes == 1)
-						iris_rotation[selectEyes + 1] = -iris_rotation[1];
-					if (selectEyes == 2)
-						iris_rotation[selectEyes + 1] = iris_rotation[2];
-					if (selectEyes == 3)
-						iris_rotation[selectEyes + 1] = -iris_rotation[3];
-					if (selectEyes == 4)
-						iris_rotation[selectEyes + 1] = -iris_rotation[4];
-					if (selectEyes == 5)
-						iris_rotation[selectEyes + 1] = -iris_rotation[5];
-					if (selectEyes == 6)
-						iris_rotation[selectEyes + 1] = -iris_rotation[6];
-					if (selectEyes == 7)
-						iris_rotation[0] = -iris_rotation[7];
-					console.log(selectEyes);
-					selectEyes += 1;
-					setCameraLayer();
-				break;
 				case 65:
 					selectEyes = 0;
 					isMoved = false;
@@ -248,45 +223,42 @@
 					init();
 					animate();
 				break;
+				case 81:
+					if (selectEyes == 0)
+						iris_rotation[selectEyes + 1] = iris_rotation[0];
+					if (selectEyes == 1)
+						iris_rotation[selectEyes + 1] = -iris_rotation[1];
+					if (selectEyes == 2)
+						iris_rotation[selectEyes + 1] = iris_rotation[2];
+					if (selectEyes == 3)
+						iris_rotation[selectEyes + 1] = -iris_rotation[3];
+					if (selectEyes == 4)
+						iris_rotation[selectEyes + 1] = -iris_rotation[4];
+					if (selectEyes == 5)
+						iris_rotation[selectEyes + 1] = iris_rotation[5];
+					if (selectEyes == 6)
+						iris_rotation[selectEyes + 1] = -iris_rotation[6];
+					if (selectEyes == 7)
+						iris_rotation[0] = iris_rotation[7];
+					selectEyes += 1;
+					setCameraLayer();
+				break;
 				case 83:
-					var data = JSON.stringify({ 
+					var eyes_rotation = JSON.stringify({ 
 						modellist:[
 							{
-							location:"models/mmd/るいのれ式物述有栖_配布用フォルダ/物述有栖.pmx",
-							line_locationx_1:diffrentModelPos[1],
-							line_locationy_1:diffrentModelPos[0],
-							line_locationx_2:diffrentModelPos[1],
-							line_locationy_2:diffrentModelPos[2],
-							line_locationx_3:diffrentModelPos[3],
-							line_locationy_3:diffrentModelPos[2],
-							line_locationx_4:diffrentModelPos[3],
-							line_locationy_4:diffrentModelPos[0]
-							},
-							{
-							location:"models/mmd/kizunaai/kizunaai.pmx",
-							line_locationx_1:diffrentModelPos[5],
-							line_locationy_1:diffrentModelPos[4],
-							line_locationx_2:diffrentModelPos[5],
-							line_locationy_2:diffrentModelPos[6],
-							line_locationx_3:diffrentModelPos[7],
-							line_locationy_3:diffrentModelPos[6],
-							line_locationx_4:diffrentModelPos[7],
-							line_locationy_4:diffrentModelPos[4]
-							},
-							{
-							location:"models/mmd/『天宮こころ(Kokoro Amamiya)』/『天宮こころ(Kokoro Amamiya)』.pmx",
-							line_locationx_1:diffrentModelPos[9],
-							line_locationy_1:diffrentModelPos[8],
-							line_locationx_2:diffrentModelPos[9],
-							line_locationy_2:diffrentModelPos[10],
-							line_locationx_3:diffrentModelPos[11],
-							line_locationy_3:diffrentModelPos[10],
-							line_locationx_4:diffrentModelPos[11],
-							line_locationy_4:diffrentModelPos[8]
+							Right_X_negative_angle1:iris_rotation[0] * Math.PI * 20 * -1,
+							Left_X_negative_angle1:iris_rotation[1] * Math.PI * 20 * -1,
+							Right_X_positive_angle1:iris_rotation[2] * Math.PI * 20 * -1,
+							Left_X_positive_angle1:iris_rotation[3] * Math.PI * 20 * -1,
+							Right_X_negative_angle2:iris_rotation[4] * Math.PI * 20 * -1,
+							Left_X_negative_angle2:iris_rotation[7] * Math.PI * 20 * -1,
+							Right_X_positive_angle2:iris_rotation[6] * Math.PI * 20 * -1,
+							Left_X_positive_angle2:iris_rotation[5] * Math.PI * 20 * -1
 							}
 						]
 					});
-					download(data, 'data.json', 'json')
+					download(eyes_rotation, 'eyes_rotation.json', 'json')
 				break;
 				case 49:
 					selectEyes -= 1;
@@ -323,22 +295,8 @@
 		function mouseClick(e) {
 			if (e.which == 1) {
 				isMoved = true;
-
-				if (selectEyes % 2 == 0) {
-					for (var i = 1; i < mesh.skeleton.bones.length; i++) {
-						if (mesh.skeleton.bones[i].name == "右目") {
-							bone_index = i;
-							break;
-						}
-					}
-				} else {
-					for (var i = 1; i < mesh.skeleton.bones.length; i++) {
-						if (mesh.skeleton.bones[i].name == "左目") {
-							bone_index = i;
-							break;
-						}
-					}
-				}
+				
+				searchRLEyes();
 				
 				if (selectEyes < 4) {
 					clickPoint = mouseWorld.y;
@@ -360,7 +318,6 @@
 				(camera.near + camera.far) / (camera.near - camera.far),
 			);
 			mouseWorld.unproject(camera);
-
 			if (isMoved == true) {
 				if (selectEyes < 4) {
 					iris_rotation[selectEyes] = (mouseWorld.y - clickPoint) * -Math.PI / 2;
@@ -569,56 +526,55 @@
 		}
 
 		function cleanRotation() {
-			mesh.skeleton.bones[88].rotation.x = 0;
-			mesh.skeleton.bones[86].rotation.x = 0;
-			mesh.skeleton.bones[88].rotation.y = 0;
-			mesh.skeleton.bones[86].rotation.y = 0;
+			mesh.skeleton.bones[bone_index[0]].rotation.x = 0;
+			mesh.skeleton.bones[bone_index[1]].rotation.x = 0;
+			mesh.skeleton.bones[bone_index[0]].rotation.y = 0;
+			mesh.skeleton.bones[bone_index[1]].rotation.y = 0;
 		}
 
 		function render() {
 
 			effect.clear();
 
-
 			effect.setViewport(0, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT);
 			cleanRotation();
 			if( selectEyes < 4 ) {
-				mesh.skeleton.bones[bone_index].rotation.x = iris_rotation[selectEyes];
+				mesh.skeleton.bones[bone_index[selectEyes % 2]].rotation.x = iris_rotation[selectEyes];
 			} else {
-				mesh.skeleton.bones[bone_index].rotation.y = iris_rotation[selectEyes];
+				mesh.skeleton.bones[bone_index[selectEyes % 2]].rotation.y = iris_rotation[selectEyes];
 			}
-			for(let i = 0; i < 10; i++){
+			for(let i = 0; i < 5; i++){
 				effect.render(scene, camera);
 			}
 
 			effect.setViewport(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_WIDTH / 4, SCREEN_HEIGHT / 2);
 			cleanRotation();
-			mesh.skeleton.bones[88].rotation.x = iris_rotation[0];
-			mesh.skeleton.bones[86].rotation.x = iris_rotation[1];
+			mesh.skeleton.bones[bone_index[0]].rotation.x = iris_rotation[0];
+			mesh.skeleton.bones[bone_index[1]].rotation.x = iris_rotation[1];
 			for(let i = 0; i < 5; i++){
 				effect.render(scene, camera2);
 			}
 
 			effect.setViewport(SCREEN_WIDTH / 2 + SCREEN_WIDTH / 4, SCREEN_HEIGHT / 2, SCREEN_WIDTH / 4, SCREEN_HEIGHT / 2);
 			cleanRotation();
-			mesh.skeleton.bones[88].rotation.x = iris_rotation[2];
-			mesh.skeleton.bones[86].rotation.x = iris_rotation[3];
+			mesh.skeleton.bones[bone_index[0]].rotation.x = iris_rotation[2];
+			mesh.skeleton.bones[bone_index[1]].rotation.x = iris_rotation[3];
 			for(let i = 0; i < 5; i++){
 				effect.render(scene, camera3);
 			}
 
 			effect.setViewport(SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 4, SCREEN_HEIGHT / 2);
 			cleanRotation();
-			mesh.skeleton.bones[88].rotation.y = iris_rotation[4];
-			mesh.skeleton.bones[86].rotation.y = iris_rotation[6];
+			mesh.skeleton.bones[bone_index[0]].rotation.y = iris_rotation[4];
+			mesh.skeleton.bones[bone_index[1]].rotation.y = iris_rotation[7];
 			for(let i = 0; i < 5; i++){
 				effect.render(scene, camera4);
 			}
 
 			effect.setViewport(SCREEN_WIDTH / 2 + SCREEN_WIDTH / 4, 0, SCREEN_WIDTH / 4, SCREEN_HEIGHT / 2);
 			cleanRotation();
-			mesh.skeleton.bones[88].rotation.y = iris_rotation[7];
-			mesh.skeleton.bones[86].rotation.y = iris_rotation[5];
+			mesh.skeleton.bones[bone_index[0]].rotation.y = iris_rotation[6];
+			mesh.skeleton.bones[bone_index[1]].rotation.y = iris_rotation[5];
 			for(let i = 0; i < 5; i++){
 				effect.render(scene, camera5);
 			}
