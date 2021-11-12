@@ -24,6 +24,7 @@
 	<script src="js/libs/ammo.wasm.js"></script>
 	<script src="scoreoutputer.min.js"></script>
 	<script type="text/javascript" src="data.json"></script>
+	<script type="text/javascript" src="eyes_rotation.json"></script>
 	<script>
 		// 建構子 ScoreOutputer 接受一個字串，該字串為 csv 的檔案名稱
 		// 以下面範例，檔名就為 "109598105(總分: 6).csv"
@@ -97,7 +98,7 @@
 		let lineObj = [];
 		var body = document.body;
 		var linePosition = new Array(8), changeModel = 0;
-		var data, selectEyes = 0, iris_rotation = new Array(8), isMoved = false;
+		var data, rotation_data, selectEyes = 0, iris_rotation = new Array(8), isMoved = false;
 		var bone_index = [0, 0];
 		var mouseWorld = new THREE.Vector3(), clickPoint = 0;
 		var selectId = [0, 1, 2, 3, 4, 7, 6, 5];
@@ -128,6 +129,17 @@
 					bone_index[1] = i;
 					break;
 				}
+			}
+
+			if (iris_rotation[0] == 0) {
+				iris_rotation[0] = rotation_data[0].Right_X_negative_angle1 / Math.PI / 20 / -1;
+				iris_rotation[1] = rotation_data[0].Left_X_negative_angle1 / Math.PI / 20 / -1;
+				iris_rotation[2] = rotation_data[0].Right_X_positive_angle1 / Math.PI / 20 / -1;
+				iris_rotation[3] = rotation_data[0].Left_X_positive_angle1 / Math.PI / 20 / -1;
+				iris_rotation[4] = rotation_data[0].Right_X_negative_angle2 / Math.PI / 20 / -1;
+				iris_rotation[7] = rotation_data[0].Left_X_negative_angle2 / Math.PI / 20 / -1;
+				iris_rotation[6] = rotation_data[0].Right_X_positive_angle2 / Math.PI / 20 / -1;
+				iris_rotation[5] = rotation_data[0].Left_X_positive_angle2 / Math.PI / 20 / -1;
 			}
 		}
 
@@ -250,8 +262,8 @@
 					setCameraLayer();
 				break;
 				case 83:
-					var eyes_rotation = JSON.stringify({ 
-						modellist:[
+					var eyes_rotation = JSON.stringify(
+						[
 							{
 							Right_X_negative_angle1:iris_rotation[0] * Math.PI * 20 * -1,
 							Left_X_negative_angle1:iris_rotation[1] * Math.PI * 20 * -1,
@@ -263,7 +275,7 @@
 							Left_X_positive_angle2:iris_rotation[5] * Math.PI * 20 * -1
 							}
 						]
-					});
+					);
 					download(eyes_rotation, 'eyes_rotation.json', 'json')
 				break;
 				case 49:
@@ -331,6 +343,7 @@
 					iris_rotation[selectEyes] = (mouseWorld.x - clickPoint) * Math.PI / 2;
 				}
 			}
+			searchRLEyes();
 		}
 
 		document.body.addEventListener('mousemove', getPosition, false);
@@ -348,6 +361,9 @@
 		}
 		readTextFile("data.json", function(text){
 			data = JSON.parse(text);
+		});
+		readTextFile("eyes_rotation.json", function(text){
+			rotation_data = JSON.parse(text);
 		});
 
 		function init() {
@@ -476,6 +492,9 @@
 				line2.layers.set( 1 );
 				lineObj[i + 5] = line2;
 			}
+
+			
+			
 
 			
 			//
